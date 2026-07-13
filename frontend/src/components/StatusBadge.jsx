@@ -1,0 +1,52 @@
+const toneMap = {
+  "Em dia": "green",
+  "A vencer": "gray",
+  "Pago": "green",
+  "Aguardando vencimento": "gray",
+  "Em atraso": "red",
+  pago: "green",
+  ok: "green",
+  importado: "green",
+  reconhecido: "green",
+  sincronizada: "green",
+  pendente: "gray",
+  Atencao: "yellow",
+  faltando: "gray",
+  "Atraso moderado": "orange",
+  "Atraso critico": "red",
+  "Atraso crítico": "red",
+  "Nao pagou 1a fatura": "red",
+  "Primeira fatura em atraso": "red",
+  "Segunda fatura em atraso": "red",
+  "Fatura pendente": "red",
+  "Cliente ativo com risco": "red",
+  "Acompanhar 2a fatura": "orange",
+  "Acompanhar segunda fatura": "orange",
+  "Aguardando segunda fatura": "gray",
+  "Fatura ainda nao venceu": "gray",
+  "Alto volume de atraso": "red",
+  "Alto volume de inadimplencia": "red",
+  "Risco na primeira fatura": "red",
+  "Churn elevado": "orange",
+  "Atencao em qualidade": "yellow",
+  erro: "red",
+  inadimplente: "red",
+  alta: "green",
+  media: "yellow",
+  baixa: "red",
+  cpf: "green",
+  nome_vendedor: "blue",
+  nome_cidade: "yellow",
+  nome: "orange",
+  nome_aproximado: "red",
+  sem_match: "gray",
+  ambiguo: "red",
+  true: "green",
+  false: "gray"
+};
+
+export default function StatusBadge({ value }) {
+  const label = typeof value === "boolean" ? (value ? "Sim" : "Nao") : value || "Sem informacao";
+  const tone = toneMap[String(value)] || toneMap[label] || "gray";
+  return <span className={`badge ${tone}`}>{label}</span>;
+}

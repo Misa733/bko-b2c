@@ -1,0 +1,12 @@
+{
+  "watch": ["src"],
+  "ext": "js,mjs,cjs",
+  "ignore": [
+    "src/storage/*.json",
+    "src/storage/data/**",
+    "uploads/**",
+    "credentials/**",
+    "../frontend/**",
+    "../node_modules/**"
+  ]
+}

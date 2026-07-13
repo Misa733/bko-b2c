@@ -1,0 +1,11 @@
+node_modules/
+dist/
+uploads/
+*.log
+backend/src/storage/competencias.json
+backend/src/storage/settings.json
+backend/src/storage/competencias/
+backend/src/storage/data/
+backend/credentials/
+.env
+backend/credentials/*.json
