@@ -83,6 +83,12 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   min-width: 0;
 }
 
+.sidebar-backdrop,
+.menu-trigger,
+.sidebar-close {
+  display: none;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -143,6 +149,13 @@ main {
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
+  min-width: 0;
+}
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -593,23 +606,58 @@ details.panel > summary {
 @media (max-width: 1100px) {
   .app-shell { grid-template-columns: 1fr; }
   .sidebar {
-    position: sticky;
-    z-index: 10;
-    height: auto;
-    padding: 14px 16px;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    width: min(310px, 86vw);
+    height: 100vh;
+    padding: 18px;
+    transform: translateX(-105%);
+    transition: transform .2s ease;
+    box-shadow: 18px 0 40px rgba(15, 23, 42, .28);
   }
-  .brand { margin-bottom: 12px; }
+  .menu-open .sidebar {
+    transform: translateX(0);
+  }
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    display: none;
+    border: 0;
+    border-radius: 0;
+    background: rgba(15, 23, 42, .45);
+    padding: 0;
+  }
+  .menu-open .sidebar-backdrop {
+    display: block;
+  }
+  .menu-trigger {
+    display: inline-flex;
+    width: auto;
+    flex: 0 0 auto;
+  }
+  .sidebar-close {
+    display: inline-flex;
+    width: 38px;
+    height: 38px;
+    margin-left: auto;
+    padding: 0;
+    flex: 0 0 auto;
+    color: #fff;
+    background: #1e293b;
+    border-color: #334155;
+  }
+  .brand { margin-bottom: 18px; }
   .sidebar nav {
-    display: flex;
+    display: grid;
     gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
+    overflow: visible;
+    padding-bottom: 0;
   }
   .sidebar button {
-    flex: 0 0 auto;
-    white-space: nowrap;
+    width: 100%;
+    white-space: normal;
   }
   .page-grid, .chart-grid {
     grid-template-columns: 1fr;
@@ -623,9 +671,6 @@ details.panel > summary {
   main { padding: 14px; }
   button, .button {
     width: 100%;
-  }
-  .sidebar button {
-    width: auto;
   }
   .link {
     width: auto;
@@ -643,6 +688,12 @@ details.panel > summary {
   .topbar, .panel-header {
     align-items: stretch;
     flex-direction: column;
+  }
+  .topbar-title {
+    align-items: flex-start;
+  }
+  .menu-trigger {
+    width: auto;
   }
   .topbar select {
     max-width: none;

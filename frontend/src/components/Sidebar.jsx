@@ -1,4 +1,4 @@
-import { BarChart3, FileSpreadsheet, LayoutDashboard, ListChecks, SearchCheck, Settings, ShieldCheck, Upload, Users } from "lucide-react";
+import { BarChart3, FileSpreadsheet, LayoutDashboard, ListChecks, SearchCheck, Settings, ShieldCheck, Upload, Users, X } from "lucide-react";
 
 const items = [
   { id: "competencias", label: "Competencias", icon: ListChecks },
@@ -13,7 +13,7 @@ const items = [
   { id: "configuracoes", label: "Configuracoes", icon: Settings }
 ];
 
-export default function Sidebar({ page, setPage }) {
+export default function Sidebar({ page, setPage, onClose }) {
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -22,6 +22,9 @@ export default function Sidebar({ page, setPage }) {
           <strong>Cockpit Comercial</strong>
           <small>B2C Brisa/Brisanet</small>
         </div>
+        <button className="sidebar-close" onClick={onClose} aria-label="Fechar menu">
+          <X size={18} />
+        </button>
       </div>
       <nav>
         {items.map((item) => {
