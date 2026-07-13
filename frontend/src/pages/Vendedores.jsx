@@ -5,9 +5,18 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import LoadingState from "../components/LoadingState.jsx";
 import { percent } from "../utils/format.js";
 
+const filterOptions = [
+  { id: "cobranca", label: "Atraso ou inadimplencia" },
+  { id: "critico", label: "Atraso critico" },
+  { id: "inadimplencia", label: "Inadimplencia" },
+  { id: "primeira", label: "Nao pagou 1a parcela" },
+  { id: "segunda", label: "2a parcela pendente" },
+  { id: "todos", label: "Todos vendedores" }
+];
+
 export default function Vendedores({ competenciaId, openVendorClients }) {
   const [rows, setRows] = useState(null);
-  const [filters, setFilters] = useState({ nome: "", atraso: false, churn: false, inadimplencia: false, ordem: "pior" });
+  const [filters, setFilters] = useState({ nome: "", situacao: "cobranca", ordem: "pior" });
 
   useEffect(() => {
     if (!competenciaId) return;
@@ -18,15 +27,19 @@ export default function Vendedores({ competenciaId, openVendorClients }) {
   const filtered = useMemo(() => {
     const list = [...(rows || [])].filter((row) => {
       if (filters.nome && !row.nomeVendedor.toLowerCase().includes(filters.nome.toLowerCase())) return false;
-      if (filters.atraso && row.clientesInadimplentes === 0) return false;
-      if (filters.churn && row.churnSafra < 0.25) return false;
-      if (filters.inadimplencia && row.clientesInadimplentes === 0) return false;
+      if (filters.situacao === "cobranca") return row.clientesEmAtraso > 0 || row.clientesInadimplentes > 0 || row.clientesNaoPagaramPrimeiraFatura > 0;
+      if (filters.situacao === "critico") return row.clientesAtrasoCritico > 0;
+      if (filters.situacao === "inadimplencia") return row.clientesInadimplentes > 0;
+      if (filters.situacao === "primeira") return row.clientesNaoPagaramPrimeiraFatura > 0;
+      if (filters.situacao === "segunda") return row.clientesComSegundaFaturaPendente > 0;
       return true;
     });
     return list.sort((a, b) => {
-      const scoreA = a.clientesInadimplentes + a.clientesAtrasoCritico + a.churnSafra * 10;
-      const scoreB = b.clientesInadimplentes + b.clientesAtrasoCritico + b.churnSafra * 10;
-      return filters.ordem === "pior" ? scoreB - scoreA : scoreA - scoreB;
+      const scoreA = a.clientesAtrasoCritico * 5 + a.clientesInadimplentes * 4 + a.clientesNaoPagaramPrimeiraFatura * 3 + a.clientesEmAtraso * 2 + a.clientesComSegundaFaturaPendente;
+      const scoreB = b.clientesAtrasoCritico * 5 + b.clientesInadimplentes * 4 + b.clientesNaoPagaramPrimeiraFatura * 3 + b.clientesEmAtraso * 2 + b.clientesComSegundaFaturaPendente;
+      if (filters.ordem === "nome") return String(a.nomeVendedor || "").localeCompare(String(b.nomeVendedor || ""));
+      if (filters.ordem === "menos") return scoreA - scoreB;
+      return scoreB - scoreA;
     });
   }, [rows, filters]);
 
@@ -37,7 +50,8 @@ export default function Vendedores({ competenciaId, openVendorClients }) {
     vendedoresComInadimplencia: rows.filter((row) => row.clientesInadimplentes > 0).length,
     vendedoresComSegundaPendente: rows.filter((row) => row.clientesComSegundaFaturaPendente > 0).length,
     clientesEmAtraso: rows.reduce((sum, row) => sum + row.clientesEmAtraso, 0),
-    clientesNaoPagaramPrimeira: rows.reduce((sum, row) => sum + row.clientesNaoPagaramPrimeiraFatura, 0)
+    clientesNaoPagaramPrimeira: rows.reduce((sum, row) => sum + row.clientesNaoPagaramPrimeiraFatura, 0),
+    clientesAtrasoCritico: rows.reduce((sum, row) => sum + row.clientesAtrasoCritico, 0)
   };
 
   function vendorRowClass(row) {
@@ -50,9 +64,9 @@ export default function Vendedores({ competenciaId, openVendorClients }) {
     <section className="stack">
       <div className="attention-grid">
         <div className="attention-card critical">
-          <span>Acao imediata</span>
-          <strong>{resumoCritico.vendedoresComInadimplencia}</strong>
-          <small>vendedores com clientes inadimplentes</small>
+          <span>Para cobrar agora</span>
+          <strong>{filtered.length}</strong>
+          <small>vendedores no filtro selecionado</small>
         </div>
         <div className="attention-card warning">
           <span>Clientes em atraso</span>
@@ -60,27 +74,47 @@ export default function Vendedores({ competenciaId, openVendorClients }) {
           <small>distribuidos em {resumoCritico.vendedoresComAtraso} vendedores</small>
         </div>
         <div className="attention-card orange">
-          <span>Acompanhar 2a fatura</span>
-          <strong>{resumoCritico.vendedoresComSegundaPendente}</strong>
-          <small>vendedores com clientes aguardando 2a fatura</small>
+          <span>Atraso critico</span>
+          <strong>{resumoCritico.clientesAtrasoCritico}</strong>
+          <small>clientes acima do limite de risco</small>
         </div>
       </div>
 
-      <div className="panel filters">
-        <input placeholder="Nome vendedor" value={filters.nome} onChange={(e) => setFilters({ ...filters, nome: e.target.value })} />
-        <label><input type="checkbox" checked={filters.atraso} onChange={(e) => setFilters({ ...filters, atraso: e.target.checked })} /> Apenas com atraso</label>
-        <label><input type="checkbox" checked={filters.churn} onChange={(e) => setFilters({ ...filters, churn: e.target.checked })} /> Apenas churn alto</label>
-        <label><input type="checkbox" checked={filters.inadimplencia} onChange={(e) => setFilters({ ...filters, inadimplencia: e.target.checked })} /> Apenas inadimplencia</label>
-        <select value={filters.ordem} onChange={(e) => setFilters({ ...filters, ordem: e.target.value })}>
-          <option value="pior">Pior desempenho</option>
-          <option value="melhor">Melhor desempenho</option>
-        </select>
+      <div className="panel compact">
+        <div className="panel-header">
+          <div>
+            <h2>Fila de vendedores para cobranca</h2>
+            <p className="muted">A tela ja abre mostrando quem tem cliente com atraso, inadimplencia ou primeira parcela em aberto.</p>
+          </div>
+          <span className="muted">{filtered.length} de {rows.length} vendedores</span>
+        </div>
+        <div className="quick-filters">
+          {filterOptions.map((option) => (
+            <button
+              key={option.id}
+              className={filters.situacao === option.id ? "active" : ""}
+              onClick={() => setFilters({ ...filters, situacao: option.id })}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <div className="filters vendor-filter-bar">
+          <input placeholder="Buscar vendedor pelo nome" value={filters.nome} onChange={(e) => setFilters({ ...filters, nome: e.target.value })} />
+          <select value={filters.ordem} onChange={(e) => setFilters({ ...filters, ordem: e.target.value })}>
+            <option value="pior">Mais urgentes primeiro</option>
+            <option value="menos">Menos urgentes primeiro</option>
+            <option value="nome">Ordem alfabetica</option>
+          </select>
+          <button className="ghost" onClick={() => setFilters({ nome: "", situacao: "cobranca", ordem: "pior" })}>Limpar filtros</button>
+        </div>
       </div>
 
       <div className="panel">
-        <h2>Vendedores</h2>
+        <h2>Vendedores com pendencias</h2>
         <DataTable
           rows={filtered}
+          empty="Nenhum vendedor encontrado para este filtro."
           rowClassName={vendorRowClass}
           columns={[
             { key: "nomeVendedor", label: "Nome vendedor", render: (row) => (
@@ -90,11 +124,13 @@ export default function Vendedores({ competenciaId, openVendorClients }) {
               </div>
             ) },
             { key: "totalClientes", label: "Total clientes" },
+            { key: "clientesEmAtraso", label: "Com atraso", render: (row) => row.clientesEmAtraso > 0 ? <strong className="warning-text">{row.clientesEmAtraso}</strong> : row.clientesEmAtraso },
             { key: "clientesInadimplentes", label: "Clientes inadimplentes", render: (row) => row.clientesInadimplentes > 0 ? <strong className="danger-text">{row.clientesInadimplentes}</strong> : row.clientesInadimplentes },
             { key: "clientesAtrasoCritico", label: "Atraso critico", render: (row) => row.clientesAtrasoCritico > 0 ? <strong className="danger-text">{row.clientesAtrasoCritico}</strong> : row.clientesAtrasoCritico },
+            { key: "clientesNaoPagaramPrimeiraFatura", label: "Nao pagou 1a", render: (row) => row.clientesNaoPagaramPrimeiraFatura > 0 ? <strong className="danger-text">{row.clientesNaoPagaramPrimeiraFatura}</strong> : row.clientesNaoPagaramPrimeiraFatura },
+            { key: "clientesComSegundaFaturaPendente", label: "2a pendente", render: (row) => row.clientesComSegundaFaturaPendente > 0 ? <strong className="warning-text">{row.clientesComSegundaFaturaPendente}</strong> : row.clientesComSegundaFaturaPendente },
             { key: "churnSafra", label: "Churn", render: (row) => percent(row.churnSafra) },
-            { key: "cancelamentosSafra", label: "Cancelamentos" },
-            { key: "acoes", label: "Acao", render: (row) => <button className="primary" onClick={() => openVendorClients(row.nomeVendedor)}>Abrir Clientes</button> }
+            { key: "acoes", label: "Acao", render: (row) => <button className="primary" onClick={() => openVendorClients(row.nomeVendedor)}>Ver clientes</button> }
           ]}
         />
       </div>

@@ -305,6 +305,10 @@ label {
   border-color: var(--primary);
 }
 
+.vendor-filter-bar {
+  margin-top: 14px;
+}
+
 .table-wrap {
   width: 100%;
   overflow: auto;
